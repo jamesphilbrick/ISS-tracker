@@ -2,10 +2,10 @@
 # 15/06/2020
 
 # NOTES:
-# Might wanna make it so that the actual request for the TLE
-# happens a lot less frequently than then pos. calculation
-# Also might be a good idea to impliment error handling
-# for the web scraping indipendent of the pos. calculation. 
+# Might wanna make it so that the actual request for the TLE happens a lot less frequently than then pos. calculation
+# Also might be a good idea to impliment error handling for the web scraping indipendent of the pos. calculation.
+#
+# can also add functionality to get names of ISS crew from https://www.nasa.gov/mission_pages/station/expeditions/index.html 
 
 # It should be noted that the Vector Time (GMT) displayed
 # represents the most recent TLE string posted by NASA and
@@ -63,6 +63,8 @@ def main():
 
     # presentation
     div_line = ('-' * len(date.strip()))
+    print(div_line)
+    print('Last updated: ', datetime.utcnow())
     print(div_line)
     print('Elevation and Azimuth (DEG):')
     print(alt, ' ', az)
