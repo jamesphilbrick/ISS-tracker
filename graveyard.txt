@@ -1,0 +1,38 @@
+[old/unused code]
+
+def tle_source():
+    # for the below line see: https://github.com/psf/requests/issues/4023
+    source = requests.get('https://spaceflight.nasa.gov/realdata/sightings/SSapplications/Post/JavaSSOP/orbit/ISS/SVPOST.html', headers = {'connection': 'close'}, timeout = TIMEOUT_DELAY).text
+    soup = BeautifulSoup(source, 'lxml')
+    text = (soup.find('pre')).prettify() # prettify function converts to str datatype
+    lines = text.splitlines()
+    indices = [i for i, x in enumerate(lines) if x == '    ISS']
+    last_iss_index = (indices[len(indices) - 1]) # get the line number for the last instance of 'ISS'
+    # not really sure about how the above line works - sourced from https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
+    date = lines[last_iss_index - 42]
+    motion = lines[last_iss_index + 14]
+    tle_1 = lines[last_iss_index + 1]
+    tle_2 = lines[last_iss_index + 2]
+    # above lines fetch lines from text by being called a set number of lines away from last 'ISS' line, kinda janky but hey ho oh well, effort
+    return tle_1, tle_2, date, motion
+
+def main():
+    # source data and then get altitude and azimuth
+    try:
+        tle_1, tle_2, date, motion = tle_source()
+    except:
+        print('ERROR: unable to source TLE from spaceflight.nasa.gov \n Perhaps there has been a format change on the source page.')
+    alt, az = calc_alt_az(tle_1, tle_2)
+
+    # presentation
+    div_line = ('-' * len(date.strip()))
+    print(div_line)
+    print('Last updated: ', datetime.utcnow())
+    print(div_line)
+    print('Elevation and Azimuth (DEG):')
+    print(alt, ' ', az)
+    print(div_line)
+    print(date.strip())
+    print(div_line)
+    print(motion.strip())
+    print(div_line + '\n')

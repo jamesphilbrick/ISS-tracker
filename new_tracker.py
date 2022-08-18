@@ -1,47 +1,36 @@
 # AUTHOR: James Philbrick
-# 15/06/2020
+# Initially created 15/06/2020
 
 # NOTES:
-# Might wanna make it so that the actual request for the TLE happens a lot less frequently than then pos. calculation
-# Also might be a good idea to impliment error handling for the web scraping indipendent of the pos. calculation.
-#
-# can also add functionality to get names of ISS crew from https://www.nasa.gov/mission_pages/station/expeditions/index.html 
+# Can add functionality to get names of ISS crew from https://www.nasa.gov/mission_pages/station/expeditions/index.html
 
-# It should be noted that the Vector Time (GMT) displayed
-# represents the most recent TLE string posted by NASA and
-# not the date at which it was sourced
+# It should be noted that the Vector Time (GMT) displayed represents the most recent TLE string posted by NASA and
+# not the date at which it was sourced.
 
 # If running on LINUX:
 # might be worth looking at https://stackoverflow.com/questions/21322948/beautifulsoup-wont-recognize-lxml
 
-import ephem #*
+import ephem
 import math
 import time
 from datetime import datetime
-from bs4 import BeautifulSoup #*
-import requests #*
+from bs4 import BeautifulSoup
+import requests 
 
-# global input vars
-obs_lon = 0.5406
-obs_lat = 53.2307
-obs_elevation = 75 # elevation in m
-update_delay = 60 # delay between each data scrape in seconds
-timeout_delay = 10 # url access timeout delay in seconds
+OBS_LON = 0.5406     # observer latitude
+OBS_LAT = 53.2307    # observer longitude
+OBS_ELEVATION = 75   # elevation in m
+UPDATE_DELAY = 60    # delay between each data scrape in seconds
+TIMEOUT_DELAY = 10   # url access timeout delay in seconds
 
 def tle_source():
-    # for the below line see: https://github.com/psf/requests/issues/4023
-    source = requests.get('https://spaceflight.nasa.gov/realdata/sightings/SSapplications/Post/JavaSSOP/orbit/ISS/SVPOST.html', headers = {'connection': 'close'}, timeout = timeout_delay).text
-    soup = BeautifulSoup(source, 'lxml')
-    text = (soup.find('pre')).prettify() # prettify function converts to str datatype
-    lines = text.splitlines()
-    indices = [i for i, x in enumerate(lines) if x == '    ISS']
-    last_iss_index = (indices[len(indices) - 1]) # get the line number for the last instance of 'ISS'
-    # not really sure about how the above line works - sourced from https://stackoverflow.com/questions/6294179/how-to-find-all-occurrences-of-an-element-in-a-list
-    date = lines[last_iss_index - 42]
-    motion = lines[last_iss_index + 14]
-    tle_1 = lines[last_iss_index + 1]
-    tle_2 = lines[last_iss_index + 2]
-    # above lines fetch lines from text by being called a set number of lines away from last 'ISS' line, kinda janky but hey ho oh well, effort
+    # NASA has changed their site - this function will need to be updated to allow for automatic collection of the most recent TLE data available.
+    # For now, data is hard-coded at the expense of accuracy.
+    tle_1 = '1 25544U 98067A   22220.55122723  .00004662  00000-0  88788-4 0  9996'
+    tle_2 = '2 25544  51.6445  77.1862 0005231  97.2571 342.7527 15.50269549353300'
+    date = '08/08/2022'
+    motion = 'motion'
+
     return tle_1, tle_2, date, motion
 
 def calc_alt_az(tle_1, tle_2):
@@ -51,6 +40,7 @@ def calc_alt_az(tle_1, tle_2):
     iss_loc.compute(observer)
     alt = (iss_loc.alt * 180/math.pi)
     az = (iss_loc.az * 180/math.pi)
+
     return alt, az
 
 def main():
@@ -58,28 +48,22 @@ def main():
     try:
         tle_1, tle_2, date, motion = tle_source()
     except:
-        print('ERROR: unable to source TLE from spaceflight.nasa.gov\n...either that or NASA changed their format or something ¯\_(ツ)_/¯')
+        print('ERROR: unable to source TLE from spaceflight.nasa.gov \n Perhaps there has been a format change on the source page.')
     alt, az = calc_alt_az(tle_1, tle_2)
 
-    # presentation
-    div_line = ('-' * len(date.strip()))
-    print(div_line)
+    # display information
     print('Last updated: ', datetime.utcnow())
-    print(div_line)
-    print('Elevation and Azimuth (DEG):')
-    print(alt, ' ', az)
-    print(div_line)
-    print(date.strip())
-    print(div_line)
-    print(motion.strip())
-    print(div_line + '\n')
+    print('Elevation and Azimuth (DEG): {} {}'.format(alt, az))
+    print('{} \n {} \n'.format(date.strip(), motion.strip()))
 
-# difine observer
-observer = ephem.Observer()
-observer.lon = obs_lon
-observer.lat = obs_lat
-observer.elevation = 75
 
-while True:
-    main()
-    time.sleep(update_delay)
+if __name__ == '__main__':
+    # difine observer
+    observer = ephem.Observer()
+    observer.lon = OBS_LON
+    observer.lat = OBS_LAT
+    observer.elevation = 75
+
+    while True:
+        main()
+        time.sleep(UPDATE_DELAY)
